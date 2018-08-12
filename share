@@ -1,0 +1,31 @@
+#!/bin/sh
+
+appdir="/Library/Application Support/Heroes Share"
+pidfile="$appdir/watcher.pid"
+logfile="$appdir/watcher.log"
+
+# check for PID file
+if [ ! -f "$pidfile" ]; then
+	echo "Daemon not running: no process ID detected"
+else
+	pids=`cat "$pidfile"`
+	info=`ps p $pids | grep $pids`
+	echo "Daemon running: process #$pids"
+	echo "$info"
+fi
+echo ""
+
+# get runtime info
+echo "Last check for replays:"
+date -r "$appdir/lastrun"
+echo ""
+echo "Last replay upload:"
+date -r "$appdir/lastmatch"
+echo ""
+
+# last 8 of log
+echo "Recent log activity:"
+echo "==============================="
+tail -n 8 "$logfile"
+
+exit 0
