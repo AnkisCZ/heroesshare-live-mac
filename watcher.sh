@@ -96,21 +96,19 @@ while true; do
 						/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/details  | tee -a "$logfile"
 						
 					else
-						echo "[`date`] Unable to parse details from rejoin file" | tee -a "$logfile"	
+						echo "[`date`] Unable to parse details from rejoin file" | tee -a "$logfile"
 						parseflag=1
 					fi
 					
 					# parse attribute events from the file
 					"$parser" --attributeevents --json "$rejoinfile" > "$tmpfile"
 					if [ $? -eq 0 ]; then
-						printf "[`date`] Uploading attributes file... " | tee -a "$logfile"		
+						printf "[`date`] Uploading attributes file... " | tee -a "$logfile"
 						/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/events  | tee -a "$logfile"
 					
 					else
-						echo "[`date`] Unable to parse events from rejoin file" | tee -a "$logfile"	
-
-						# audible notification of failure
-						/usr/bin/afplay "/System/Library/Sounds/Purr.aiff"
+						echo "[`date`] Unable to parse events from rejoin file" | tee -a "$logfile"
+						parseflag=1
 					fi
 					
 					# parse init data from the file
@@ -120,10 +118,8 @@ while true; do
 						/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/initdata  | tee -a "$logfile"
 					
 					else
-						echo "[`date`] Unable to parse init data from rejoin file" | tee -a "$logfile"	
-
-						# audible notification of failure
-						/usr/bin/afplay "/System/Library/Sounds/Purr.aiff"
+						echo "[`date`] Unable to parse init data from rejoin file" | tee -a "$logfile"
+						parseflag=1
 					fi
 					
 					if [ "$parseflag" ]; then
