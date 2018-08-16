@@ -60,7 +60,9 @@ while true; do
 
 		# update status
 		/usr/bin/touch "$appdir/lastmatch"
-	
+		# update search directory to be more specific
+		tmpdir=`awk -F "TempWriteReplay" '{print $1}' <<< "$replayfile"`
+		
 		# get hash to check if it has been uploaded
 		hash=`/sbin/md5 -q "$replayfile"`
 		result=`/usr/bin/curl --silent https://heroesshare.net/lives/check/$hash`
@@ -157,5 +159,5 @@ while true; do
 	
 	# note this cycle
 	/usr/bin/touch "$appdir/lastrun"
-	sleep 3
+	sleep 5
 done
