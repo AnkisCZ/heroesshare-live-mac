@@ -47,6 +47,7 @@ echo "[`date`] Launching with process ID $$..." | tee -a "$logfile"
 if [ ! -f "$appdir/lastmatch" ]; then
 	echo "[`date`] Last match file missing; creating a fresh copy" | tee -a "$logfile"
 	/usr/bin/touch "$appdir/lastmatch"
+	/usr/bin/touch "$appdir/lastrun"
 fi
 
 # main process loop
