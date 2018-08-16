@@ -47,7 +47,6 @@ echo "[`date`] Launching with process ID $$..." | tee -a "$logfile"
 if [ ! -f "$appdir/lastmatch" ]; then
 	echo "[`date`] Last match file missing; creating a fresh copy" | tee -a "$logfile"
 	/usr/bin/touch "$appdir/lastmatch"
-	/usr/bin/touch "$appdir/lastrun"
 fi
 
 # main process loop
@@ -62,8 +61,8 @@ while true; do
 		# update status
 		/usr/bin/touch "$appdir/lastmatch"
 		# update search directory to be more specific
-		tmpdir=`awk -F "TempWriteReplay" '{print $1}' <<< "$replayfile"`
-		
+		tmpdir=`awk -F "/TempWriteReplay" '{print $1}' <<< "$replayfile"`
+
 		# get hash to check if it has been uploaded
 		hash=`/sbin/md5 -q "$replayfile"`
 		result=`/usr/bin/curl --silent https://heroesshare.net/lives/check/$hash`
