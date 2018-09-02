@@ -4,6 +4,11 @@ appdir="/Library/Application Support/Heroes Share"
 pidfile="$appdir/watcher.pid"
 logfile="$appdir/watcher.log"
 
+# get version
+version=`cat "$appdir/version.txt"`
+echo "Client version: $version"
+echo ""
+
 # check for PID file
 if [ ! -f "$pidfile" ]; then
 	echo "Daemon not running: no process ID detected"
