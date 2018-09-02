@@ -3,35 +3,48 @@ Heroes Share Live client (macOS)
 
 Heroes Share Live lets players view live game information and MMR previews for their games, or for anyone that uses the Heroes Share Live client.
 
-How it works
+About Heroes Share Live
+Download macOS installer
+Download macOS uninstaller
+Getting started
 
-Users need to install the Heroes Share Live client on their computer. The client watches for new games in progress and parses the replay file stubs to load game details. This happens in two stages:
+You will need to download and install the Live client on your computer.
 
-BattleLobby: available at loading screen (after draft); includes players in the upcoming match, which can be used to fetch MMR
-Rejoin: available about one minute into the game; includes map, gamemode, heroes, and more extensive game details
-Once the files have been processed and uploaded anyone can visit the live games list to see game details, or use the latest game tracker to keep open match previews as new games load.
+Be sure to read our privacy policy and disclaimer
+Download HeroesShareLive.pkg
+Open your Downloads folder, right-click HeroesShareLive.pkg and select "Open" (don't just double click)
+If warned about an "unidentified developer", click Open anyways
+When prompted, enter your password to complete the install
+Once the client is installed, play your first game! During the loading screen (picture of the map with both teams) your Battle Lobby file will be sent to our server. You can then find your game on the Live games index, or you can keep open a browser that will always watch for your latest game here:
+https://heroesshare.net/live
 
-What goes on your computer
+Troubleshooting
 
-The client is very "thin" as most of the processing happens on our website. The code is all open source and can be reviewed on GitHub (macOS, Windows). Below is a summary of what each file does.
+Heroes Share Live is still very new and in its beta phase. There are bound to be issues that come up, and when they do, you can help by reporting them. Visit our Contact page to report issues and ask for help.
+Some general steps to try:
 
-macOS
+Always make sure you have the latest version of the client installed
+Check your log file! It is in the Application Support folder (see below)
+Use our diagnostic tool to check for error messages and ensure the script is running (see below)
+If no games are showing, try adjusting your Firewall and Antivirus settings
+If your games are showing in "Preview mode" only, you probably need to update your client
+If you are still experiencing issues please send a copy of the log file "watcher.log" to us along with a description of the issue. See the Contact page for ways to reach us.
 
-/Library/Application Support/Heroes Share - All service files, process details, and logs are stored here.
-/Library/Application Support/Heroes Share/heroprotocol - This is Blizzard's own replay parsing library. Full code and details are available on GitHub: https://github.com/Blizzard/heroprotocol
-As replay protocols change this library will need ot be updated to read local replay files and rejoin stubs.
-/Library/Application Support/Heroes Share/watcher.sh - This is the actual service that watches for Battle Lobby and Rejoin files, parses relevant data, and uploads it to the Heroes Share website.
-/Library/LaunchDaemons/net.heroesshare.watcher.plist - This Apple property list file defines how macOS' service manager should handle the watcher service, launching it and keeping it running in case of errors.
-/usr/local/bin/share - This is a debug script for troubleshooting issues. This lets users open Terminal and type "share" to check on the service status.
+To check on basic issues:
 
-Disclaimer
+Navigate to Applications > Utilities
+Launch Terminal
+Type "share" and press enter
+Output should be as follows:
+Script status and process ID
+Timestamp for last replay check
+Timestamp for last upload
+Last few lines of the current log file
+Where is the client installed?
 
-Blizzard's EULA	states:
-
-Data Mining: Use any unauthorized process or software that intercepts, collects, reads, or “mines” information generated or stored by the Platform; provided, however, that Blizzard may, at its sole and absolute discretion, allow the use of certain third-party user interfaces.
-Blizzard has stated	they are conditionally okay with this method of gathering in-game information, but you are ultimately responsible for what you install and use. Heroes Share is not responsible for account violations related to inappropriate use of non-Blizzard software.
-
-Contact: By using this client during the beta test you agree to be contacted about product updates via the email associated with your account.
+The Heroes Share client is installed in the Application Support folder of your root Library: /Library/Application Support/Heroes Share 
+In addition to the application data Heroes Share includes a LaunchDaemon to keep the script watching for new games. Should you need to adjust this, you can find it located here: /Library/LaunchDaemons/net.heroesshare.watcher.plist 
+To assist with diagnosing issues we've included a small script that you can run from Terminal (see above): /usr/local/bin/share
 
 Privacy
 
