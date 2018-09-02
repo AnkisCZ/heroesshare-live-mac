@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Version 1.1
+# Build 1.2
 # Copyright Heroes Share
 # https://heroesshare.net
 #
@@ -18,7 +18,7 @@ pidfile="$appdir/watcher.pid"
 logfile="$appdir/watcher.log"
 
 tmpdir="/private/var/folders"
-replayfile=""
+lobbyfile=""
 rejoinfile=""
 
 randid=`/usr/bin/openssl rand -hex 12`
@@ -39,9 +39,12 @@ if [ ! -x "$parser" ]; then
 	exit 3
 fi
 
+# get version
+version=`cat "$appdir/version.txt"`
+
 # record the process ID
 echo $$ > "$pidfile"
-echo "[`date`] Launching with process ID $$..." | tee -a "$logfile"
+echo "[`date`] Launching version $version with process ID $$..." | tee -a "$logfile"
 
 # check for lastmatch file
 if [ ! -f "$appdir/lastmatch" ]; then
@@ -53,29 +56,29 @@ fi
 # main process loop
 while true; do
 	# look for any new BattleLobby files and grab the latest one
-	replayfile=`/usr/bin/find "$tmpdir" -name replay.server.battlelobby -newer "$appdir/lastmatch" 2> /dev/null | sort -n | tail -n 1`
+	lobbyfile=`/usr/bin/find "$tmpdir" -name replay.server.battlelobby -newer "$appdir/lastmatch" 2> /dev/null | sort -n | tail -n 1`
 
 	# if there was a match, cURL it to the server
-	if [ "$replayfile" ]; then
-		echo "[`date`] Detected new battle lobby file: $replayfile" | tee -a "$logfile"
+	if [ "$lobbyfile" ]; then
+		echo "[`date`] Detected new battle lobby file: $lobbyfile" | tee -a "$logfile"
 
 		# update status
 		/usr/bin/touch "$appdir/lastmatch"
 		# update search directory to be more specific
-		tmpdir=`awk -F "/TempWriteReplay" '{print $1}' <<< "$replayfile"`
+		tmpdir=`awk -F "/TempWriteReplay" '{print $1}' <<< "$lobbyfile"`
 
 		# get hash to check if it has been uploaded
-		hash=`/sbin/md5 -q "$replayfile"`
-		result=`/usr/bin/curl --silent https://heroesshare.net/lives/check/$hash`
+		uploadhash=`/sbin/md5 -q "$lobbyfile"`
+		result=`/usr/bin/curl --silent https://heroesshare.net/lives/check/$uploadhash`
 		if [ ! "$result" ]; then
-			printf "[`date`] Uploading replay file with hash $hash... " | tee -a "$logfile"
-			/usr/bin/curl --form "randid=$randid" --form "upload=@$replayfile" https://heroesshare.net/lives/battlelobby  | tee -a "$logfile"
+			printf "[`date`] Uploading lobby file with hash $uploadhash... " | tee -a "$logfile"
+			/usr/bin/curl --form "randid=$randid" --form "upload=@$lobbyfile" https://heroesshare.net/lives/battlelobby  | tee -a "$logfile"
 
 			# audible notification when complete
 			/usr/bin/afplay "/System/Library/Sounds/Hero.aiff"
 			
 			# get username from file owner
-			username=`/usr/bin/stat -f %Su "$replayfile"`
+			username=`/usr/bin/stat -f %Su "$lobbyfile"`
 			userhome=`eval echo ~$username`
 			targetdir="$userhome/Library/Application Support/Blizzard/Heroes of the Storm/Accounts"
 			
@@ -106,11 +109,11 @@ while true; do
 					# parse attribute events from the file
 					"$parser" --attributeevents --json "$rejoinfile" > "$tmpfile"
 					if [ $? -eq 0 ]; then
-						printf "[`date`] Uploading attributes file... " | tee -a "$logfile"
-						/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/events  | tee -a "$logfile"
+						printf "[`date`] Uploading attribute events file... " | tee -a "$logfile"
+						/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/attributeevents  | tee -a "$logfile"
 					
 					else
-						echo "[`date`] Unable to parse events from rejoin file" | tee -a "$logfile"
+						echo "[`date`] Unable to parse attribute events from rejoin file" | tee -a "$logfile"
 						parseflag=1
 					fi
 					
@@ -133,15 +136,89 @@ while true; do
 						/usr/bin/afplay "/System/Library/Sounds/Hero.aiff"
 					fi
 					
+					# start watching for completion
+					rejoinhash=""
+					talentshash=""
+					gameover=0
+					while [ $gameover -ne 1 ]; do
+						
+						echo "[`date`] Begin watching for talents" | tee -a "$logfile"
+						
+						# if file is gone, game is over
+						if [ ! -f "$rejoinfile"]; then					
+							echo "[`date`] Rejoin file no longer available; completing." | tee -a "$logfile"
+
+							gameover=1
+							break
+						else
+							# get updated hash of rejoin file
+							tmphash=`/sbin/md5 "$rejoinfile"`
+
+							# if file didn't change, game is over
+							if [ "$tmphash" != "$rejoinhash"]; then
+								gameover=1
+								break
+
+							# game still going
+							else
+								# update last hash
+								rejoinhash="$tmphash"
+								
+								# check for new talents
+								"$parser" --gameevents --json "$rejoinfile" | grep SHeroTalentTreeSelectedEvent > "$tmpfile"
+								tmphash=`/sbin/md5 "$tmpfile"`
+								
+								# if file changed, upload it
+								if [ "$tmphash" != "$talentshash"]; then
+									# update last hash
+									rejoinhash="$tmphash"
+
+									printf "[`date`] Uploading game events file... " | tee -a "$logfile"
+									/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/gameevents  | tee -a "$logfile"
+								
+								# no changes; wait a while and try again
+								else
+									sleep 30
+								fi
+
+							fi
+						fi
+					done
+					
+					# wait for post-game cleanup
+					sleep 10
+					
+					# check for a new replay file
+					replayfile=`/usr/bin/find "$targetdir" -name *.StormReplay -newer "$appdir/lastmatch" 2> /dev/null | sort -n | tail -n 1`
+
+					# if there was a match, cURL it to the server
+					if [ "$replayfile" ]; then
+						echo "[`date`] Detected new replay file: $replayfile" | tee -a "$logfile"
+						printf "[`date`] Uploading replay file to HotsApi and HotsLogs... " | tee -a "$logfile"
+						/usr/bin/curl --form "file=@$replayfile" http://hotsapi.net/api/v1/upload?uploadToHotslogs=1  | tee -a "$logfile"
+						
+						# audible notification when complete
+						/usr/bin/afplay "/System/Library/Sounds/Hero.aiff"
+					else
+						echo "[`date`] Unable to locate replay file for recent live game!" | tee -a "$logfile"
+						/usr/bin/afplay "/System/Library/Sounds/Purr.aiff"
+					fi
+					
+					# notify of completion
+					/usr/bin/curl --silent https://heroesshare.net/lives/complete/$randid
+		
+					# clean up and pass back to main watch loop
 					rm "$tmpfile"
-					break;
+					replayfile=""
+					
+					break
 				fi
 				
 				i=`expr $i + 1`
 				sleep 5
 			done
 			
-			# check if this was a match or a timeout
+			# check if stage 2 uploads succeeded or timed out
 			if [ ! "$rejoinfile" ]; then
 				echo "[`date`] No rejoin file found for additional upload: $targetdir" | tee -a "$logfile"	
 
@@ -149,13 +226,15 @@ while true; do
 				/usr/bin/afplay "/System/Library/Sounds/Purr.aiff"
 			fi
 			rejoinfile=""
+		
+		# hash check failed - probably a duplicate
 		else
 			echo "[`date`] $result" | tee -a "$logfile"
 			
 			# audible notification of failure
 			/usr/bin/afplay "/System/Library/Sounds/Purr.aiff"
 		fi
-		replayfile=""
+		lobbyfile=""
 	fi
 	
 	# note this cycle
