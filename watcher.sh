@@ -136,13 +136,16 @@ while true; do
 						/usr/bin/afplay "/System/Library/Sounds/Hero.aiff"
 					fi
 					
-					# start watching for completion
+					# start watching for talents (until game over)
 					echo "[`date`] Begin watching for talents" | tee -a "$logfile"
 
 					rejoinhash=""
 					talentshash=""
 					gameover=0
-					while [ $gameover -ne 1 ]; do
+
+					# watch for up to 45 minutes
+					j=0
+					while [ $j -lt 90 ]; do
 						
 						# if file is gone, game is over
 						if [ ! -f "$rejoinfile"]; then					
@@ -152,10 +155,10 @@ while true; do
 							break
 						else
 							# get updated hash of rejoin file
-							tmphash=`/sbin/md5 "$rejoinfile"`
+							tmphash=`/sbin/md5 -q "$rejoinfile"`
 
-							# if file didn't change, game is over
-							if [ "$tmphash" != "$rejoinhash"]; then
+							# if file stayed the same, game is over
+							if [ "$tmphash" = "$rejoinhash"]; then
 								gameover=1
 								break
 
@@ -166,7 +169,7 @@ while true; do
 								
 								# check for new talents
 								"$parser" --gameevents --json "$rejoinfile" | grep SHeroTalentTreeSelectedEvent > "$tmpfile"
-								tmphash=`/sbin/md5 "$tmpfile"`
+								tmphash=`/sbin/md5 -q "$tmpfile"`
 								
 								# if file changed, upload it
 								if [ "$tmphash" != "$talentshash"]; then
@@ -175,15 +178,18 @@ while true; do
 
 									printf "[`date`] Uploading game events file... " | tee -a "$logfile"
 									/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/gameevents  | tee -a "$logfile"
-								
-								# no changes; wait a while and try again
-								else
-									sleep 30
 								fi
 
+								# wait a while then try again
+								j=`expr $j + 1`
+								sleep 30
 							fi
 						fi
 					done
+					
+					if [ $gameover -ne 1 ]; then
+						echo "[`date`] Error: Timed out waiting for game to finish" | tee -a "$logfile"
+					fi
 					
 					# wait for post-game cleanup
 					sleep 10
