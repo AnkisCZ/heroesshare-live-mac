@@ -137,12 +137,12 @@ while true; do
 					fi
 					
 					# start watching for completion
+					echo "[`date`] Begin watching for talents" | tee -a "$logfile"
+
 					rejoinhash=""
 					talentshash=""
 					gameover=0
 					while [ $gameover -ne 1 ]; do
-						
-						echo "[`date`] Begin watching for talents" | tee -a "$logfile"
 						
 						# if file is gone, game is over
 						if [ ! -f "$rejoinfile"]; then					
@@ -171,7 +171,7 @@ while true; do
 								# if file changed, upload it
 								if [ "$tmphash" != "$talentshash"]; then
 									# update last hash
-									rejoinhash="$tmphash"
+									talentshash="$tmphash"
 
 									printf "[`date`] Uploading game events file... " | tee -a "$logfile"
 									/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/gameevents  | tee -a "$logfile"
