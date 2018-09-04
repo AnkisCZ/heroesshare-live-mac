@@ -1,6 +1,5 @@
 #!/bin/sh
 #
-# Build 1.2
 # Copyright Heroes Share
 # https://heroesshare.net
 #

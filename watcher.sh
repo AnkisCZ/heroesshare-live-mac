@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Build 1.2
+# Build 1.3
 # Copyright Heroes Share
 # https://heroesshare.net
 #
@@ -139,8 +139,8 @@ while true; do
 					# start watching for talents (until game over)
 					echo "[`date`] Begin watching for talents" | tee -a "$logfile"
 
-					rejoinhash=""
-					talentshash=""
+					rejoinhash="null"
+					talentshash="null"
 					gameover=0
 
 					# watch for up to 45 minutes
@@ -148,7 +148,7 @@ while true; do
 					while [ $j -lt 90 ]; do
 						
 						# if file is gone, game is over
-						if [ ! -f "$rejoinfile"]; then					
+						if [ ! -f "$rejoinfile" ]; then					
 							echo "[`date`] Rejoin file no longer available; completing." | tee -a "$logfile"
 
 							gameover=1
@@ -158,7 +158,7 @@ while true; do
 							tmphash=`/sbin/md5 -q "$rejoinfile"`
 
 							# if file stayed the same, game is over
-							if [ "$tmphash" = "$rejoinhash"]; then
+							if [ "$tmphash" = "$rejoinhash" ]; then
 								gameover=1
 								break
 
@@ -171,13 +171,15 @@ while true; do
 								"$parser" --gameevents --json "$rejoinfile" | grep SHeroTalentTreeSelectedEvent > "$tmpfile"
 								tmphash=`/sbin/md5 -q "$tmpfile"`
 								
-								# if file changed, upload it
-								if [ "$tmphash" != "$talentshash"]; then
+								# if file was different than last run, upload it
+								if [ "$tmphash" != "$talentshash" ]; then
 									# update last hash
 									talentshash="$tmphash"
 
 									printf "[`date`] Uploading game events file... " | tee -a "$logfile"
 									/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/gameevents  | tee -a "$logfile"
+								else
+									echo "DEBUG - Hashes matched: $tmphash and $talentshash"
 								fi
 
 								# wait a while then try again
@@ -212,7 +214,8 @@ while true; do
 					
 					# notify of completion
 					/usr/bin/curl --silent https://heroesshare.net/lives/complete/$randid
-		
+					echo " "
+					
 					# clean up and pass back to main watch loop
 					rm "$tmpfile"
 					replayfile=""
