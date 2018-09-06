@@ -143,9 +143,9 @@ while true; do
 					talentshash="null"
 					gameover=0
 
-					# watch for up to 45 minutes
+					# watch for up to 3 minutes at a time
 					j=0
-					while [ $j -lt 90 ]; do
+					while [ $j -lt 12 ]; do
 						
 						# if file is gone, game is over
 						if [ ! -f "$rejoinfile" ]; then					
@@ -179,13 +179,16 @@ while true; do
 
 									printf "[`date`] Uploading game events file... " | tee -a "$logfile"
 									/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/gameevents  | tee -a "$logfile"
+									
+									# reset the timer
+									j=0
 								else
 									echo "DEBUG - Hashes matched: $tmphash and $talentshash"
 								fi
 
 								# wait a while then try again
 								j=`expr $j + 1`
-								sleep 30
+								sleep 15
 							fi
 						fi
 					done
