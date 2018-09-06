@@ -159,6 +159,7 @@ while true; do
 
 							# if file stayed the same, game is over
 							if [ "$tmphash" = "$rejoinhash" ]; then
+								echo "[`date`] No updates to rejoin file; completing." | tee -a "$logfile"
 								gameover=1
 								break
 
