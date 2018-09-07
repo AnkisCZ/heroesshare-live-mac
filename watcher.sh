@@ -64,8 +64,10 @@ while true; do
 
 		# update status
 		/usr/bin/touch "$appdir/lastmatch"
+		
 		# update search directory to be more specific
-		tmpdir=`awk -F "/TempWriteReplay" '{print $1}' <<< "$lobbyfile"`
+		lobbydir=`dirname "$lobbyfile"`
+		tmpdir=`dirname "$lobbyfile"`
 
 		# get hash to check if it has been uploaded
 		uploadhash=`/sbin/md5 -q "$lobbyfile"`
@@ -143,30 +145,31 @@ while true; do
 					talentshash="null"
 					gameover=0
 
-					# watch for up to 3 minutes at a time
+					# watch for up to 4 minutes at a time
 					j=0
-					while [ $j -lt 12 ]; do
+					trackerfile="$lobbydir/replay.tracker.events"
+					while [ $j -lt 8 ]; do
 						
 						# if file is gone, game is over
-						if [ ! -f "$rejoinfile" ]; then					
-							echo "[`date`] Rejoin file no longer available; completing." | tee -a "$logfile"
+						if [ ! -f "$trackerfile" ]; then					
+							echo "[`date`] Tracker events file no longer available; completing." | tee -a "$logfile"
 
 							gameover=1
 							break
 						else
-							# get updated hash of rejoin file
-							tmphash=`/sbin/md5 -q "$rejoinfile"`
+							# get updated hash of tracker file
+							tmphash=`/sbin/md5 -q "$trackerfile"`
 
 							# if file stayed the same, game is over
-							if [ "$tmphash" = "$rejoinhash" ]; then
-								echo "[`date`] No updates to rejoin file; completing." | tee -a "$logfile"
+							if [ "$tmphash" = "$trackerhash" ]; then
+								echo "[`date`] No updates to tracker events file; completing." | tee -a "$logfile"
 								gameover=1
 								break
 
 							# game still going
 							else
 								# update last hash
-								rejoinhash="$tmphash"
+								trackerhash="$tmphash"
 								
 								# check for new talents
 								"$parser" --gameevents --json "$rejoinfile" | grep SHeroTalentTreeSelectedEvent > "$tmpfile"
@@ -188,7 +191,7 @@ while true; do
 
 								# wait a while then try again
 								j=`expr $j + 1`
-								sleep 15
+								sleep 30
 							fi
 						fi
 					done
