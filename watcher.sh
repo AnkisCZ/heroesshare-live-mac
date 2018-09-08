@@ -251,6 +251,8 @@ while true; do
 			/usr/bin/afplay "/System/Library/Sounds/Purr.aiff"
 		fi
 		lobbyfile=""
+		
+		echo "[`date`] Resume watching for live games..." | tee -a "$logfile"
 	fi
 	
 	# note this cycle
