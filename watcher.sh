@@ -67,7 +67,7 @@ while true; do
 		
 		# update search directory to be more specific
 		lobbydir=`dirname "$lobbyfile"`
-		tmpdir=`dirname "$lobbyfile"`
+		tmpdir=`dirname "$lobbydir"`
 
 		# get hash to check if it has been uploaded
 		uploadhash=`/sbin/md5 -q "$lobbyfile"`
@@ -142,6 +142,7 @@ while true; do
 					echo "[`date`] Begin watching for talents" | tee -a "$logfile"
 
 					rejoinhash="null"
+					trackerhash="null"
 					talentshash="null"
 					gameover=0
 
@@ -185,8 +186,6 @@ while true; do
 									
 									# reset the timer
 									j=0
-								else
-									echo "DEBUG - Hashes matched: $tmphash and $talentshash"
 								fi
 
 								# wait a while then try again
@@ -252,7 +251,7 @@ while true; do
 		fi
 		lobbyfile=""
 		
-		echo "[`date`] Resume watching for live games..." | tee -a "$logfile"
+		echo "[`date`] Resume watching for live games in $tmpdir..." | tee -a "$logfile"
 	fi
 	
 	# note this cycle
