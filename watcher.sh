@@ -146,10 +146,10 @@ while true; do
 					talentshash="null"
 					gameover=0
 
-					# watch for up to 4 minutes at a time
+					# watch for up to 10 minutes at a time
 					j=0
 					trackerfile="$lobbydir/replay.tracker.events"
-					while [ $j -lt 8 ]; do
+					while [ $j -lt 20 ]; do
 						
 						# if file is gone, game is over
 						if [ ! -f "$trackerfile" ]; then					
