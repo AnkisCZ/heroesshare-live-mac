@@ -182,7 +182,7 @@ while true; do
 									talentshash="$tmphash"
 
 									printf "[`date`] Uploading game events file... " | tee -a "$logfile"
-									/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/gameevents  | tee -a "$logfile"
+									/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/gameevents | tee -a "$logfile"
 									
 									# reset the timer
 									j=0
@@ -209,18 +209,23 @@ while true; do
 					if [ "$replayfile" ]; then
 						echo "[`date`] Detected new replay file: $replayfile" | tee -a "$logfile"
 						printf "[`date`] Uploading replay file to HotsApi and HotsLogs... " | tee -a "$logfile"
-						/usr/bin/curl --form "file=@$replayfile" http://hotsapi.net/api/v1/upload?uploadToHotslogs=1  | tee -a "$logfile"
-						
+						/usr/bin/curl --form "file=@$replayfile" http://hotsapi.net/api/v1/upload?uploadToHotslogs=1 | tee -a "$logfile" > $tmpfile
+
+						# notify of completion and upload status
+						/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/complete/$randid | tee -a "$logfile"
+
 						# audible notification when complete
 						/usr/bin/afplay "/System/Library/Sounds/Hero.aiff"
+						
 					else
+						# notify of completion
+						/usr/bin/curl --silent https://heroesshare.net/lives/complete/$randid
+						
 						echo "[`date`] Unable to locate replay file for recent live game!" | tee -a "$logfile"
 						/usr/bin/afplay "/System/Library/Sounds/Purr.aiff"
 					fi
 					
-					# notify of completion
-					/usr/bin/curl --silent https://heroesshare.net/lives/complete/$randid
-					echo " "
+					echo " " | tee -a "$logfile"
 					
 					# clean up and pass back to main watch loop
 					rm "$tmpfile"
