@@ -208,11 +208,11 @@ while true; do
 					# if there was a match, cURL it to the server
 					if [ "$replayfile" ]; then
 						echo "[`date`] Detected new replay file: $replayfile" | tee -a "$logfile"
-						printf "[`date`] Uploading replay file to HotsApi and HotsLogs... " | tee -a "$logfile"
-						/usr/bin/curl --form "file=@$replayfile" http://hotsapi.net/api/v1/upload?uploadToHotslogs=1 | tee -a "$logfile" > $tmpfile
+						printf "[`date`] Uploading replay file (includes HotsApi and HotsLogs)... " | tee -a "$logfile"
+						#/usr/bin/curl --form "file=@$replayfile" http://hotsapi.net/api/v1/upload?uploadToHotslogs=1 | tee -a "$logfile" > $tmpfile
 
 						# notify of completion and upload status
-						/usr/bin/curl --form "randid=$randid" --form "upload=@$tmpfile" https://heroesshare.net/lives/complete/$randid | tee -a "$logfile"
+						/usr/bin/curl --form "randid=$randid" --form "upload=@$replayfile" https://heroesshare.net/lives/complete/$randid | tee -a "$logfile"
 
 						# audible notification when complete
 						/usr/bin/afplay "/System/Library/Sounds/Hero.aiff"
